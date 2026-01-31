@@ -35,6 +35,32 @@ def calc_amount_financed(vehicle_price: float, down: float, trade: float,
     return max(0.0, vehicle_price + addons - down - trade)
 
 # -----------------------------
+# INCOME CONVERSION
+# -----------------------------
+def income_to_monthly(amount: float, interval: str) -> float:
+    """Convert an income amount at a given interval to gross monthly equivalent."""
+    interval = (interval or "").strip().lower()
+    if amount is None:
+        return 0.0
+    amount = float(amount)
+    if amount <= 0:
+        return 0.0
+
+    if interval == "weekly":
+        return amount * 52.0 / 12.0
+    if interval in ("bi-weekly", "biweekly"):
+        return amount * 26.0 / 12.0
+    if interval in ("semi-monthly", "semimonthly"):
+        return amount * 2.0
+    if interval == "monthly":
+        return amount
+    if interval in ("annually", "annual"):
+        return amount / 12.0
+
+    # Unknown / blank interval
+    return 0.0
+
+# -----------------------------
 # CSV HELPERS (your inventory format)
 # -----------------------------
 def _norm_header(h: str) -> str:
@@ -218,7 +244,103 @@ with st.sidebar:
     score = st.number_input("Credit Score", min_value=300, max_value=900, value=650, step=1)
     down = st.number_input("Down Payment ($)", min_value=0.0, value=2000.0, step=500.0)
     trade = st.number_input("Trade Amount ($)", min_value=0.0, value=0.0, step=500.0)
-    income_m = st.number_input("Income (Monthly $)", min_value=1.0, value=5500.0, step=250.0)
+
+    st.header("Applicant (Manual Credit App)")
+    a1, a2, a3 = st.columns(3)
+    with a1:
+        city = st.text_input("City")
+    with a2:
+        state = st.text_input("State")
+    with a3:
+        zip_code = st.text_input("ZIP")
+
+    j1, j2 = st.columns(2)
+    with j1:
+        job_years = st.number_input("Time at Current Job (Years)", min_value=0, step=1)
+    with j2:
+        job_months = st.number_input("Time at Current Job (Months)", min_value=0, max_value=11, step=1)
+
+    gross_income = st.number_input("Gross Income ($)", min_value=0.0, value=5500.0, step=250.0)
+    income_interval = st.selectbox(
+        "Income Received",
+        ["Weekly", "Bi-Weekly", "Semi-Monthly", "Monthly", "Annually"],
+        index=3
+    )
+
+    rent_mortgage = st.number_input("Monthly Rent / Mortgage Payment ($)", min_value=0.0, step=50.0)
+
+    st.markdown("**Other Income (optional)**")
+    other_income_source = st.text_input("Other Income Source")
+    other_income = st.number_input("Other Income ($)", min_value=0.0, step=50.0)
+    other_income_interval = st.selectbox(
+        "Other Income Received",
+        ["", "Weekly", "Bi-Weekly", "Semi-Monthly", "Monthly", "Annually"],
+        index=0
+    )
+
+    support_alimony = st.number_input("Monthly Support/Alimony Received ($)", min_value=0.0, step=50.0)
+
+    st.divider()
+    add_cosigner = st.checkbox("Add Co-signer (optional)")
+
+    co_gross_income = 0.0
+    co_income_interval = "Monthly"
+    co_other_income = 0.0
+    co_other_income_interval = ""
+    co_support_alimony = 0.0
+
+    if add_cosigner:
+        st.header("Co-signer (Manual Credit App)")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            co_city = st.text_input("Co-signer City")
+        with c2:
+            co_state = st.text_input("Co-signer State")
+        with c3:
+            co_zip = st.text_input("Co-signer ZIP")
+
+        cj1, cj2 = st.columns(2)
+        with cj1:
+            co_job_years = st.number_input("Co-signer Time at Current Job (Years)", min_value=0, step=1)
+        with cj2:
+            co_job_months = st.number_input("Co-signer Time at Current Job (Months)", min_value=0, max_value=11, step=1)
+
+        co_gross_income = st.number_input("Co-signer Gross Income ($)", min_value=0.0, step=250.0)
+        co_income_interval = st.selectbox(
+            "Co-signer Income Received",
+            ["Weekly", "Bi-Weekly", "Semi-Monthly", "Monthly", "Annually"],
+            index=3
+        )
+
+        co_rent_mortgage = st.number_input("Co-signer Monthly Rent / Mortgage ($)", min_value=0.0, step=50.0)
+
+        st.markdown("**Co-signer Other Income (optional)**")
+        co_other_income_source = st.text_input("Co-signer Other Income Source")
+        co_other_income = st.number_input("Co-signer Other Income ($)", min_value=0.0, step=50.0)
+        co_other_income_interval = st.selectbox(
+            "Co-signer Other Income Received",
+            ["", "Weekly", "Bi-Weekly", "Semi-Monthly", "Monthly", "Annually"],
+            index=0
+        )
+
+        co_support_alimony = st.number_input("Co-signer Monthly Support/Alimony Received ($)", min_value=0.0, step=50.0)
+
+    include_cosigner_income = st.checkbox("Include co-signer income in total (if present)", value=True)
+
+    # Monthly income used for matching
+    applicant_monthly = income_to_monthly(gross_income, income_interval)
+    applicant_other_monthly = income_to_monthly(other_income, other_income_interval)
+    applicant_support_monthly = float(support_alimony)
+
+    cosigner_monthly = income_to_monthly(co_gross_income, co_income_interval) if add_cosigner else 0.0
+    cosigner_other_monthly = income_to_monthly(co_other_income, co_other_income_interval) if add_cosigner else 0.0
+    cosigner_support_monthly = float(co_support_alimony) if add_cosigner else 0.0
+
+    income_m = applicant_monthly + applicant_other_monthly + applicant_support_monthly
+    if add_cosigner and include_cosigner_income:
+        income_m += (cosigner_monthly + cosigner_other_monthly + cosigner_support_monthly)
+
+    st.caption(f"Total gross monthly income used for matching: ${income_m:,.2f}")
 
     st.header("Deal Settings")
     term = st.number_input("Term (Months)", min_value=12, max_value=96, value=DEFAULT_TERM_MONTHS, step=1)
@@ -241,6 +363,10 @@ try:
     lenders = load_lenders_json_bytes(lenders_file.getvalue())
 except Exception as e:
     st.error(str(e))
+    st.stop()
+
+if float(income_m) <= 0:
+    st.error("Total gross monthly income must be greater than $0. Check income fields.")
     st.stop()
 
 results = match(
@@ -268,14 +394,9 @@ with col1:
 with col2:
     st.subheader("Matching Vehicles")
     sel = results[int(selected_idx)]
-    rows = sel["matches"]
-
-    # show top 200 for performance
-    rows = rows[:200]
-
+    rows = sel["matches"][:200]
     st.dataframe(rows, use_container_width=True)
 
-    # export
     st.download_button(
         "Download Results (selected lender) as CSV",
         data=("\n".join([
