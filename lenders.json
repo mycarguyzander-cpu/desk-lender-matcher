@@ -1,0 +1,62 @@
+{
+  "lenders": [
+    {
+      "name": "Westlake Financial Services",
+      "min_score": 0,
+      "max_score": 900,
+      "max_ltv": 1.50,
+      "max_payment_dti": 1.00,
+      "max_amount_financed": 999999,
+      "apr_by_score": [
+        { "min_score": 740, "apr": 7.99 },
+        { "min_score": 620, "apr": 15.99 },
+        { "min_score": 0,   "apr": 23.99 }
+      ],
+      "notes": "Sheet shows no max PTI/Income/Amount Financed/Vehicle age or mileage caps; rates shown 7.99%-23.99% and 6.99%-19.90% / 4.99%-19.90%; max LTV up to 150%."
+    },
+    {
+      "name": "Exeter Finance (Base)",
+      "min_score": 400,
+      "max_score": 619,
+      "max_ltv": 1.50,
+      "max_payment_dti": 0.21,
+      "max_amount_financed": 50000,
+      "apr_by_score": [
+        { "min_score": 580, "apr": 12.95 },
+        { "min_score": 500, "apr": 15.95 },
+        { "min_score": 400, "apr": 18.95 }
+      ],
+      "notes": "Min income $1,700 (single source). Vehicles up to 13 yrs / 200k miles. PTI shown 15%-21%."
+    },
+    {
+      "name": "Exeter Finance (ExeterPLUS)",
+      "min_score": 620,
+      "max_score": 900,
+      "max_ltv": 1.50,
+      "max_payment_dti": 0.21,
+      "max_amount_financed": 50000,
+      "apr_by_score": [
+        { "min_score": 740, "apr": 9.95 },
+        { "min_score": 680, "apr": 11.95 },
+        { "min_score": 620, "apr": 13.95 }
+      ],
+      "notes": "PLUS program shows 620+ and rates as low as 9.95%."
+    },
+    {
+      "name": "Global Lending Services (GLS)",
+      "min_score": 400,
+      "max_score": 700,
+      "max_ltv": 1.35,
+      "max_payment_dti": 0.24,
+      "max_amount_financed": 55000,
+      "min_amount_financed": 7000,
+      "apr_by_score": [
+        { "min_score": 660, "apr": 9.95 },
+        { "min_score": 580, "apr": 13.95 },
+        { "min_score": 500, "apr": 17.95 },
+        { "min_score": 400, "apr": 21.95 }
+      ],
+      "notes": "Min income $1,800. PTI up to 24%. Amount financed $7,000-$55,000. Max LTV 135%. Term up to 78 months per sheet; mileage/term matrix exists."
+    }
+  ]
+}
