@@ -172,7 +172,8 @@ def load_lenders_json_bytes(file_bytes: bytes):
 def match(score: int, down: float, trade: float, income_monthly: float,
           term_months: int, store_max_dti: float,
           lenders: list, inventory: list,
-          tax_fees_rate: float, doc_fee: float):
+          tax_fees_rate: float, doc_fee: float,
+          min_pay: float, max_pay: float):
 
     results = []
     for lender in lenders:
@@ -203,6 +204,11 @@ def match(score: int, down: float, trade: float, income_monthly: float,
                 continue
 
             pmt = monthly_payment(amt_fin, apr, term_months)
+
+            # Payment Range Filter (AFTER tax/fees since amt_fin includes tax/fees/doc)
+            if pmt < float(min_pay) or pmt > float(max_pay):
+                continue
+
             pmt_dti = pmt / income_monthly if income_monthly > 0 else 999
 
             if pmt_dti > max_payment_dti:
@@ -237,12 +243,20 @@ def match(score: int, down: float, trade: float, income_monthly: float,
 # STREAMLIT UI
 # -----------------------------
 st.set_page_config(page_title="Desk & Lender Matcher", layout="wide")
-st.title("Desk & Lender Matcher TEST")
+st.title("Desk & Lender Matcher")
 
 with st.sidebar:
     st.header("Customer Inputs")
     score = st.number_input("Credit Score", min_value=300, max_value=900, value=650, step=1)
     down = st.number_input("Down Payment ($)", min_value=0.0, value=2000.0, step=500.0)
+
+    # Payment Range (AFTER tax/fees)
+    min_pay = st.number_input("Min Payment ($/mo) (After tax/fees)", min_value=0.0, value=0.0, step=25.0)
+    max_pay = st.number_input("Max Payment ($/mo) (After tax/fees)", min_value=0.0, value=99999.0, step=25.0)
+    if max_pay < min_pay:
+        st.error("Max Payment must be >= Min Payment")
+        st.stop()
+
     trade = st.number_input("Trade Amount ($)", min_value=0.0, value=0.0, step=500.0)
 
     st.header("Applicant (Manual Credit App)")
@@ -380,6 +394,8 @@ results = match(
     inventory=inventory,
     tax_fees_rate=float(taxfees),
     doc_fee=float(docfee),
+    min_pay=float(min_pay),
+    max_pay=float(max_pay),
 )
 
 with col1:
